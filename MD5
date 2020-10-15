@@ -1,0 +1,14 @@
+b8bb2bf3497ac187fac5f3a25c857378 *DESCRIPTION
+8762a705d89c565d782e304be4b2d22b *NAMESPACE
+d7ba6b70bf5244372b389197061cdf95 *NEWS
+2f53b78ff6a396f2017e79337bd8efad *R/fromSource.R
+8106d1549b977b38d084e5f19400df98 *R/run.R
+15af227bdba76f583bca2701b7d0e4b2 *R/swagger.R
+38cccf65b09650e0fa61886d416ff84f *inst/examples/example_0/acumos.R
+9c1b00404cb68a553726ff65fb5c39c4 *man/compose.Rd
+9770aff2663513d5b535861fb211c896 *man/composeFromSource.Rd
+716bd5a274b085ae587ecc45ece71cd8 *man/push.Rd
+a31747fbba47e8d7a642d929b7e8e15b *man/pushFromSource.Rd
+19b0f2967171f0a7eff25f685bf8b662 *man/run.Rd
+c1c8ebd4019cc92ab9dd4b6291731e22 *tests/testthat.R
+a38a1362a54d2dc795b146973907981e *tests/testthat/test-api.R
