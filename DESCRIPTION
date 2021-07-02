@@ -1,6 +1,6 @@
 Package: acumos
 Title: 'Acumos' R Interface
-Version: 0.4-1
+Version: 0.4-4
 Authors@R: c(person("Simon", "Urbanek", role = c("aut"), email = "simon.urbanek@R-project.org"),
              person("Alassane", "Samba", role = c("aut","cre"), email = "alassane.samba@orange.com"),
              person("AT&T", role = c("cph")),
@@ -9,7 +9,7 @@ Authors@R: c(person("Simon", "Urbanek", role = c("aut"), email = "simon.urbanek@
 Description: Create, upload and run 'Acumos' R models.
   'Acumos' (<https://www.acumos.org>) is a platform and open source framework intended to make it easy to build,
   share, and deploy AI apps. 'Acumos' is part of the 'LF AI Foundation', an umbrella
-  organization within The Linux Foundation. With this package, user can create a
+  organization within 'The Linux Foundation'. With this package, user can create a
   component, and push it to an 'Acumos' platform.
 License: Apache License (== 2.0)
 Imports: httr, jsonlite, RProtoBuf, Rserve, RestRserve, yaml
@@ -23,7 +23,7 @@ URL: https://www.acumos.org (Acumos project website)
         (docs)
 RoxygenNote: 7.0.2
 NeedsCompilation: no
-Packaged: 2020-10-02 14:33:29 UTC; alassane
+Packaged: 2021-07-02 07:51:39 UTC; XXGB1668
 Author: Simon Urbanek [aut],
   Alassane Samba [aut, cre],
   AT&T [cph],
@@ -31,4 +31,4 @@ Author: Simon Urbanek [aut],
   Orange [cph]
 Maintainer: Alassane Samba <alassane.samba@orange.com>
 Repository: CRAN
-Date/Publication: 2020-10-15 12:00:02 UTC
+Date/Publication: 2021-07-02 08:10:02 UTC

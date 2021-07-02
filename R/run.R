@@ -43,8 +43,8 @@ fetch.types <- function(f, default.in=c(x="character"), default.out=c(x="charact
 }
 
 ## compose a component
-compose <- function(predict, transform, fit, generate, service, initialize, aux=list(), name="R Component", componentVersion="unknown version", file="component.amc") {
-  dir <- tempfile("acumos-component")
+compose <- function(predict, transform, fit, generate, service, initialize, aux=list(), name="R Component", componentVersion="unknown version", file="component.zip") {
+  dir <- tempfile("acumos-component-")
   if (!all(dir.create(dir))) stop("unable to create demporary directory in `",dir,"' to assemble the component bundle")
 
   meta <- list(schema="acumos.schema.model:0.5.0", name=name,
@@ -94,7 +94,9 @@ compose <- function(predict, transform, fit, generate, service, initialize, aux=
                    ))
   ## -j ignores paths (is it portable in Widnows?)
   if (file.exists(file) && unlink(file)) stop("target file already exists and cannot be removed")
-  zip(file, c(file.path(dir, "component.bin"), file.path(dir, "meta.json"), file.path(dir, "component.proto"), file.path(dir, "component.swagger.yaml")), extras="-j")
+  zip(file.path(dir, "model.zip"), c(file.path(dir, "component.bin"), file.path(dir, "component.swagger.yaml")), extras="-j")
+  zip(file.path(dir, paste0(basename(dir),".zip")), c(file.path(dir, "model.zip"), file.path(dir, "meta.json"), file.path(dir, "component.proto")), extras="-j")
+  file.rename(file.path(dir, paste0(basename(dir),".zip")), file)
   unlink(dir, TRUE)
   invisible(meta)
 }
@@ -135,7 +137,7 @@ protoService <- function(name, inputType = paste0(name, "Input"), outputType = p
   }
 }
 
-run <- function(where=getwd(), file="component.amc", runtime="runtime.json", init.only=FALSE) {
+run <- function(where=getwd(), file="component.zip", runtime="runtime.json", init.only=FALSE) {
   file <- path.expand(file)
   .dinfo(1L, "INFO: starting component in '", where,"', archive:", file, ", runtime:", runtime)
   if (dir.exists(file)) {
@@ -148,10 +150,14 @@ run <- function(where=getwd(), file="component.amc", runtime="runtime.json", ini
     unzip(file, exdir=dir)
     .dinfo(2L, "INFO: component unpacked in ", dir)
   }
+  payloadzip <- file.path(dir, "model.zip")
+  if(file.exists(payloadzip)){
+    unzip(payloadzip, exdir=dir)
+  }
   metadata <- file.path(dir, "meta.json")
   payload <- file.path(dir, "component.bin")
   proto <- file.path(dir, "component.proto")
-  swagger<-file.path(dir,"component.swagger.yaml")
+  swagger <- file.path(dir,"component.swagger.yaml")
   c.files <- c(metadata, payload, proto)
   ok <- file.exists(c.files)
   if (!all(ok)) stop(paste0("invalid archive (missing ",
@@ -339,26 +345,37 @@ auth <- function(url, user, password) {
   } else stop("Authentiaction request failed: ", rawToChar(res$content))
 }
 
-push <- function(url, file="component.amc", token, create=TRUE, license, headers, ...) {
+push <- function(url, file="component.zip", token, create=TRUE, deploy=FALSE, license, headers, ...) {
   ## FIXME: the server currently accepts only multiplart form
   ## with the uncompressed contents - until the server is fixed to
   ## support the component bundle properly we have to unpack and push
+  if(deploy & !create){
+    deploy<-FALSE
+    warning("The parameter 'deploy' is set to FALSE as the parameter 'create' is FALSE.")
+  }
   dir <- tempfile("acumos-push")
   dir.create(dir)
   on.exit(unlink(dir, TRUE))
   unzip(file, exdir=dir)
-  metadata <- file.path(dir, "meta.json")
-  payload <- file.path(dir, "component.bin")
-  proto <- file.path(dir, "component.proto")
-  addSource<-file.exists(file.path(dir, "component.R"))
-  if(addSource){
+  if(file.exists(file.path(dir, "component.swagger.yaml")) & file.exists(file.path(dir, "component.bin")) & !file.exists(file.path(dir, "model.zip"))){
+    zip(file.path(dir,"model.zip"), c(file.path(dir, "component.swagger.yaml"), file.path(dir, "component.bin")), extras="-j")
+    payload <- file.path(dir, "model.zip")
+  } else if(file.exists(file.path(dir, "component.bin")) & !file.exists(file.path(dir, "model.zip"))){
+    payload <- file.path(dir, "component.bin")
+  } else if(file.exists(file.path(dir, "model.zip"))){
+    payload <- file.path(dir, "model.zip")
+  }
+  if(file.exists(file.path(dir, "component.R"))){
     source <- upload_file(file.path(dir, "component.R"), type = "text/plain; charset=UTF-8")
   }else{
     source <- NULL
   }
+  metadata <- file.path(dir, "meta.json")
+  proto <- file.path(dir, "component.proto")
   headers <- if (missing(headers)) list() else as.list(headers)
   headers[["Content-Type"]] <- "multipart/form-data"
   headers[["isCreateMicroservice"]] <- if (isTRUE(create)) "true" else "false"
+  headers[["deploy"]] <- if (isTRUE(deploy)) "true" else "false"
   if (!missing(token)) headers$Authorization <- token
   body <- list(
     metadata = upload_file(metadata, type = "application/json; charset=UTF-8"),
@@ -380,7 +397,9 @@ push <- function(url, file="component.amc", token, create=TRUE, license, headers
   if (http_error(req)) stop("HTTP error in the POST request: ", content(req))
   if (content(req)$status=="SUCCESS") {
     cat("Model pushed successfully to :",url,"\n")
+    if(headers[["deploy"]]=="true") {cat("Model pushed for automatic deployment.","\n")}
     if(headers[["isCreateMicroservice"]]=="true") {cat("Acumos model docker image successfully created :",content(req)$dockerImageUri,"\n")}
+
   }
   invisible(content(req))
 }
